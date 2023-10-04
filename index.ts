@@ -1,6 +1,5 @@
 import { Database } from 'bun:sqlite';
 const db = new Database('mydb.sqlite', { create: true });
-
 /*const query = db.query(
   'CREATE TABLE CARS (carId INTEGER PRIMARY KEY,brand TEXT NOT NULL,model TEXT NOT NULL,steats NUMBER NOT NULL,licencePlate TEXT NOT NULL,engineType TEXT NOT NULL,currentAutonomy NUMBER NOT NULL,image TEXT NOT NULL);'
 );
@@ -16,16 +15,14 @@ const query3 = db.query(
 );
 console.log(query3.all());
 */
-const query4 = db.query('SELECT * FROM CARS');
 // => { message: "Hello world" }
-console.log(query4.all());
 
 import { Elysia, t } from 'elysia';
 import { cors } from '@elysiajs/cors';
 
 new Elysia()
   .use(cors())
-  .get('/api/cars', () => 'Hello World')
+  .get('/api/cars', () => db.query('SELECT * FROM CARS').all())
   .post('/api/upload', ({ body }) => {
     //console.log(JSON.parse(body as string));
     const req = JSON.parse(body as string);
@@ -39,8 +36,57 @@ new Elysia()
     const image = req.image;
 
     db.run(
-      'INSERT INTO CARS (carId,brand,model,steats,licencePlate,engineType,currentAutonomy,image) VALUES (1,?,?,?,?,?,?,?)',
-      [marca, modelo, seats, matricula, engine, currentAutonomy, image]
+      'INSERT INTO CARS (carId, brand,model,steats,licencePlate,engineType,currentAutonomy,image) VALUES (?,?,?,?,?,?,?,?)',
+      [
+        db.query('SELECT * FROM CARS').all().length + 1,
+        marca,
+        modelo,
+        seats,
+        matricula,
+        engine,
+        currentAutonomy,
+        image,
+      ]
+    );
+  })
+  .get('/api/driver', () => db.query('SELECT * FROM DRIVER').all())
+  .post('/api/setdriver', ({ body }) => {
+    //console.log(JSON.parse(body as string));
+    const req = JSON.parse(JSON.stringify(body));
+    console.log(req);
+    const name = req.name;
+    const contact = req.contact;
+    const licenceNumber = req.licenceNumber;
+
+    db.run(
+      'INSERT INTO DRIVER (driverId,name,contact,licenceNumber) VALUES (?,?,?,?)',
+      [
+        db.query('SELECT * FROM DRIVER').all().length + 1,
+        name,
+        contact,
+        licenceNumber,
+      ]
+    );
+  })
+  .get('/api/reservation', () => db.query('SELECT * FROM RESERVATION').all())
+  .post('/api/setreservation', ({ body }) => {
+    //console.log(JSON.parse(body as string));
+    const req = JSON.parse(JSON.stringify(body));
+    console.log(req);
+    const pickipDate = req.pickipDate;
+    const dropOffDate = req.dropOffDate;
+    const driverId = req.driverId;
+    const carId = req.carId;
+
+    db.run(
+      'INSERT INTO RESERVATION (reservationId,pickipDate,dropOffDate,driverId,carId) VALUES (?,?,?,?,?)',
+      [
+        db.query('SELECT * FROM RESERVATION').all().length + 1,
+        pickipDate,
+        dropOffDate,
+        driverId,
+        carId,
+      ]
     );
   })
   .listen(5000);
